@@ -12,6 +12,10 @@ def fetchDataset() -> ucimlrepo.dotdict:
 def nullChecker(df: pd.DataFrame) -> pd.Series:
       return df.isna().sum()
 
+# changing group of cols type 
+def changeColsType(df: pd.DataFrame, columns:list, type: str) -> None:
+      for column in columns:
+            df[column] = df[column].astype(type)
 
 if __name__ == "__main__":
       df = pd.read_csv('data/diabetic_data.csv')
@@ -36,7 +40,6 @@ if __name__ == "__main__":
       # we notice that we got '?' among the categories so we replace it with 'Other' and change the 
       # the type of the column to cateogry
       df.replace({'race': {'?': 'Other'}}, inplace=True)
-      df['race'] = df['race'].astype('category')
       # Now we move on to checking the uniqueness of both the visit id
       print(df.shape[0])
       print(df['encounter_id'].nunique())
@@ -58,8 +61,6 @@ if __name__ == "__main__":
       # now we replace the '?' from the weights with not-recorded as it's more informative and we change
       # both types to categorical
       df.replace({'weight': {'?': 'not-recorded'}}, inplace=True)
-      df['weight'] = df['weight'].astype('category')
-      df['age'] = df['age'].astype('category')
       # now we drop all the medicine-related cols 
       medication_columns = ['metformin', 'repaglinide', 'nateglinide', 'chlorpropamide', 'glimepiride',
                         'acetohexamide', 'glipizide', 'glyburide', 'tolbutamide', 'pioglitazone',
@@ -107,10 +108,78 @@ if __name__ == "__main__":
 }
       # now, we will check the diag_1 in coresponse with discharged_position
       print(df[df['admission_type_id'] == 'resuscitation'][['diag_1', 'discharge_disposition_id']].head(20))
-      df['discharge_disposition_id'] = df['discharge_disposition_id'].map(discharge_disposition_ranked).astype('category')
+      df['discharge_disposition_id'] = df['discharge_disposition_id'].map(discharge_disposition_ranked)
       print(df.info())
-      # now we check the admission_source_id:
+      # now we check the admission_source_id and map values:
       print(sorted(list(df['admission_source_id'].unique())))
+      print(df[df['admission_type_id'] == 'resuscitation'][['diag_1', 'admission_source_id']].head(20))
+      admission_source_ranked = {
+    # Top 5 Common Sources
+    1: "1-EmergencyRoom",
+    2: "2-PhysicianReferral",
+    3: "3-TransferFromAcuteCareHospital",
+    4: "4-TransferFromSNF",
+    5: "5-ClinicReferral",
+    
+    # Mid-Tier Sources
+    6: "6-HMOReferral",
+    7: "7-Court/LawEnforcement",
+    8: "8-Birth(Newborn)",
+    9: "9-Other",
+    10: "10-Unknown",
+    11: "11-HomeHealthCare",
+    12: None,  # Gap
+    
+    # Special Cases
+    13: "13-Readmission",
+    14: "14-InterhospitalTransfer",
+    15: None,  # Gap
+    16: None,  # Gap
+    17: "17-NormalDelivery",
+    18: None,  # Gap
+    19: None,  # Gap
+    20: "20-PrematureDelivery",
+    21: None,  # Gap
+    22: "22-Hospice",
+    23: None,  # Gap
+    24: None,  # Gap
+    
+    # Rare Cases
+    25: "25-InternationalTransfer"
+}
+      df['admission_source_id'] = df['admission_source_id'].map(admission_source_ranked)
+      print(df.info())
+      # now we check the time hospital column, conclusion we move on it doesn't need anything:
+      print(df['time_in_hospital'].unique())
+      # now we check payer_code column, conclusion it does have the '?' which we will replace with other:
+      df.replace({"payer_code": {'?': 'Others'}}, inplace=True)
+      print(df['payer_code'].unique())
+      # now we we check the medical_specialty column, conclusion same as payer_code:
+      df.replace({"medical_specialty" : {'?': 'Others'}}, inplace=True)
+      print(df['medical_specialty'].unique())
+      # now we check the numerical values [from col:12 to col:17], conculsion: good to go !
+      print(df.iloc[:, 12: 18].nunique())
+      # the diag_1, diag_2, diag_3 are object types we change them to categorical per columns description
+      # the number_diagnoses column is the same as cols from 12 to 17, we move to max_glu_serum col:
+      print(df['max_glu_serum'].unique())
+      # changing all columns with categorical features all once at a time, any column not mentioned above
+      # doesn't have any problem just it was wrong typed as object and changed to 'category'
+      df['max_glu_serum'] = df['max_glu_serum'].astype('category')
+      changeColsType(df=df, columns=['race', 'gender', 'age', 'weight', 'admission_type_id',
+                                      'discharge_disposition_id', 'admission_source_id', 'payer_code',
+                                      'medical_specialty', 'diag_1', 'diag_2', 'diag_3', 'max_glu_serum',
+                                        'A1Cresult', 'insulin', 'change', 'diabetesMed', 'readmitted'],
+                                        type='category')
+      print(df.info())
+
+
+      
+
+
+
+
+
+
 
 
 
