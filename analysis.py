@@ -1,6 +1,8 @@
 import ucimlrepo
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # fetch data for the first runtime
 def fetchDataset() -> ucimlrepo.dotdict:
@@ -68,7 +70,7 @@ if __name__ == "__main__":
                         'examide', 'citoglipton', 'glyburide-metformin', 'glipizide-metformin',
                         'glimepiride-pioglitazone', 'metformin-rosiglitazone', 'metformin-pioglitazone']
       
-      df.drop(columns=medication_columns, inplace=True)
+      # df.drop(columns=medication_columns, inplace=True)
       print(df.info())
       # Now we move on to the analysis of the discharge_disposition_id column
       print(sorted(list(df['discharge_disposition_id'].unique())))
@@ -171,6 +173,35 @@ if __name__ == "__main__":
                                         'A1Cresult', 'insulin', 'change', 'diabetesMed', 'readmitted'],
                                         type='category')
       print(df.info())
+      # Now to answer the questions on task one:
+      # 1 - Which medications are most associated with lower readmission rates ?
+      print(df['readmitted'].unique())
+      medperAdm = df.groupby(['readmitted'])[medication_columns].\
+            apply(lambda x : x.apply(pd.Series.value_counts).sum()).\
+      sort_values(by=medication_columns, ascending=True).reset_index()
+      print(medperAdm)
+      # plotting the result 
+      medCounts = df.melt(id_vars='readmitted', value_vars=medication_columns, 
+                     var_name='medication', value_name='status')
+      print(medCounts['status'].unique())
+      medCounts = medCounts[medCounts['status'] != 'No']  
+      plotData = medCounts.groupby(['medication', 'readmitted']).size().reset_index(name='count')
+      print(plotData)
+
+      # Step 2: Plot grouped bar plot
+      plt.figure(figsize=(16, 6))
+      sns.barplot(data=plotData, x='medication', y='count', hue='readmitted')
+      plt.xticks(rotation=90)
+      plt.title('Medication Usage by Readmission Status')
+      plt.tight_layout()
+      plt.show()
+
+
+
+      
+
+      
+
 
 
       
