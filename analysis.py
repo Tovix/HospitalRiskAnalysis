@@ -2,6 +2,7 @@ import ucimlrepo
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy import stats
 import matplotlib.pyplot as plt
 
 # fetch data for the first runtime
@@ -180,6 +181,7 @@ if __name__ == "__main__":
             apply(lambda x : x.apply(pd.Series.value_counts).sum()).\
       sort_values(by=medication_columns, ascending=True).reset_index()
       print(medperAdm)
+
       # plotting the result 
       medCounts = df.melt(id_vars='readmitted', value_vars=medication_columns, 
                      var_name='medication', value_name='status')
@@ -188,14 +190,51 @@ if __name__ == "__main__":
       plotData = medCounts.groupby(['medication', 'readmitted']).size().reset_index(name='count')
       print(plotData)
 
-      # Step 2: Plot grouped bar plot
       plt.figure(figsize=(16, 6))
       sns.barplot(data=plotData, x='medication', y='count', hue='readmitted')
       plt.xticks(rotation=90)
       plt.title('Medication Usage by Readmission Status')
       plt.tight_layout()
+      # plt.show()
+
+      # 2 - How does length of stay (time_in_hospital) affect readmission risk ?
+      print(df['time_in_hospital'].unique())
+      timePerReadmission = df.groupby(['readmitted']).\
+      agg({"time_in_hospital": 'mean'}).\
+      sort_values(by="time_in_hospital", ascending=False)
+      print(timePerReadmission)
+
+      # plotting the result
+      plt.figure(figsize=(16, 6))
+      sns.boxplot(data=df, x='readmitted', y='time_in_hospital', hue='readmitted')
+      plt.xticks(rotation=90)
+      plt.title('boxplot of hours per readmittion status')
+      plt.tight_layout()
       plt.show()
 
+      # since it seems there are outliers, let's remove them and see the plots again
+      q1 = df['time_in_hospital'].quantile(0.25)
+      q3 = df['time_in_hospital'].quantile(0.75)
+      IQR = q3 - q1
+      lowerBound = q1 - 1.5 * IQR
+      upperBound = q3 + 1.5 * IQR
+
+      timeHospitalNoOutliersDf = df[(df['time_in_hospital'] >= lowerBound) & 
+                                  (df['time_in_hospital'] <= upperBound)]
+      plt.figure(figsize=(16, 6))
+      sns.boxplot(data=timeHospitalNoOutliersDf, x='readmitted', 
+                  y='time_in_hospital', hue='readmitted')
+      plt.xticks(rotation=90)
+      plt.title('boxplot of hours per readmittion status with no outliers')
+      plt.tight_layout()
+      plt.show()
+      # final conclusion : Length of stay does not appear to be strongly associated with 
+      # readmission status in this dataset.
+      
+      
+
+
+      
 
 
       
