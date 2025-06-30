@@ -195,7 +195,6 @@ if __name__ == "__main__":
       plt.xticks(rotation=90)
       plt.title('Medication Usage by Readmission Status')
       plt.tight_layout()
-      # plt.show()
 
       # 2 - How does length of stay (time_in_hospital) affect readmission risk ?
       print(df['time_in_hospital'].unique())
@@ -210,7 +209,6 @@ if __name__ == "__main__":
       plt.xticks(rotation=90)
       plt.title('boxplot of hours per readmittion status')
       plt.tight_layout()
-      plt.show()
 
       # since it seems there are outliers, let's remove them and see the plots again
       q1 = df['time_in_hospital'].quantile(0.25)
@@ -227,9 +225,34 @@ if __name__ == "__main__":
       plt.xticks(rotation=90)
       plt.title('boxplot of hours per readmittion status with no outliers')
       plt.tight_layout()
-      plt.show()
+      # plt.show()
       # final conclusion : Length of stay does not appear to be strongly associated with 
       # readmission status in this dataset.
+
+      # 3 - Are there differences in readmission rates by age group or gender ?
+      df['was_readmitted'] = df['readmitted'].isin(['<30', '>30'])
+
+      ageReadmitRate = df.groupby('age')['was_readmitted'].mean().reset_index()
+      genderReadmitRate = df.groupby('gender')['was_readmitted'].mean().reset_index()
+
+      # Plot the readmission rate by age group
+      fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 6))
+      sns.barplot(data=ageReadmitRate, x='age', y='was_readmitted', ax=axes[0, 0])
+      axes[0, 0].set_ylabel('Readmission Rate')
+      axes[0, 0].set_xlabel('Age Group')
+      axes[0, 0].set_title('Readmission Rate by Age Group')
+      sns.barplot(data=genderReadmitRate, x='gender', y='was_readmitted', ax=axes[0, 1])
+      axes[0, 1].set_ylabel('Readmission Rate')
+      axes[0, 1].set_xlabel('Gender Group')
+      axes[0, 1].set_title('Readmission Rate by Gender Group')
+      plt.tight_layout()
+      plt.show()
+
+      # The likelihood of being readmitted to the hospital increases with patient age, 
+      # especially for those over 60, Females have a higher readmission rate than males.   
+
+      # 4 - What is the distribution of primary diagnoses (diag_1) among readmitted patients ?
+      
       
       
 
