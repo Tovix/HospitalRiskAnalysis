@@ -245,14 +245,27 @@ if __name__ == "__main__":
       axes[0, 1].set_ylabel('Readmission Rate')
       axes[0, 1].set_xlabel('Gender Group')
       axes[0, 1].set_title('Readmission Rate by Gender Group')
-      plt.tight_layout()
-      plt.show()
 
       # The likelihood of being readmitted to the hospital increases with patient age, 
       # especially for those over 60, Females have a higher readmission rate than males.   
 
       # 4 - What is the distribution of primary diagnoses (diag_1) among readmitted patients ?
-      
+      diag1ReadmitRate = df.groupby('was_readmitted')['diag_1'].value_counts().reset_index().\
+      sort_values(by='count', ascending=False)
+      pltData = diag1ReadmitRate[diag1ReadmitRate['was_readmitted'] == True].head(10)
+      print(pltData)
+      pltData['diag_1'] = pltData['diag_1'].astype(str).str.strip()
+      plt.figure(figsize=(12, 10))  # Increase height
+      sns.barplot(data=pltData, y='diag_1', x='count', orient='h')
+      plt.xlabel('Readmission Counts')
+      plt.ylabel('diag_1 Code')
+      plt.title('Top 10 Primary Diagnoses Among Readmitted Patients')
+      plt.yticks(fontsize=10)  # Reduce font size
+      plt.tight_layout()
+      plt.show()
+      # final conclusion 428, 414 are the most diagnosis per readmitted patients
+            
+
       
       
 
