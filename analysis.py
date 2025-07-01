@@ -262,8 +262,87 @@ if __name__ == "__main__":
       plt.title('Top 10 Primary Diagnoses Among Readmitted Patients')
       plt.yticks(fontsize=10)  # Reduce font size
       plt.tight_layout()
-      plt.show()
+      # plt.show()
       # final conclusion 428, 414 are the most diagnosis per readmitted patients
+
+      # 5 - How do the number of lab procedures or medications relate to readmission probability ?
+      readmittedOnly = df[df['was_readmitted'] == True]
+
+      readmittedOnlyPerLab = df.groupby('was_readmitted')['num_lab_procedures'].mean().\
+      reset_index(name='mean').sort_values(by="mean", ascending=False)
+      print(readmittedOnlyPerLab)
+
+      readmittedOnlyPerMed = df.groupby('was_readmitted')['num_medications'].mean().\
+      reset_index(name='mean').sort_values(by="mean", ascending=False)
+      print(readmittedOnlyPerMed)
+
+      plt.figure(figsize=(12, 10))  
+      sns.barplot(data=readmittedOnlyPerLab, y='was_readmitted', x='mean', orient='h')
+      plt.xlabel('Readmission Counts')
+      plt.ylabel('Number of procedures mean')
+      plt.title('Number of procedures mean Vs Readmission Rate')
+      plt.yticks(fontsize=10)  
+
+      plt.figure(figsize=(12, 10))  
+      sns.barplot(data=readmittedOnlyPerMed, y='was_readmitted', x='mean', orient='h')
+      plt.xlabel('Readmission Counts')
+      plt.ylabel('Number of Medications mean')
+      plt.title('Number of Medications mean Vs Readmission Rate')
+      plt.yticks(fontsize=10)  
+      plt.tight_layout()
+      plt.show()
+
+      # statisical test (t test)
+      trueReadmPerLabProcedures = df[df['was_readmitted'] == True]['num_lab_procedures']
+      falseReadmPerLabProcedures = df[df['was_readmitted'] == False]['num_lab_procedures']
+      tStatistic, pValue = stats.ttest_ind(trueReadmPerLabProcedures, falseReadmPerLabProcedures)
+      print(tStatistic, pValue)
+
+      # p-value = 5.3321e-36 which is smaller than significance value (0.05) which means There is a statistically
+      # significant difference in the average number of lab procedures between readmitted and non-readmitted patients.
+      # This suggests that the number of lab procedures is associated with readmission probability in your dataset.
+
+
+      trueReadmPerMediciation = df[df['was_readmitted'] == True]['num_medications']
+      falseReadmPerMediciation = df[df['was_readmitted'] == False]['num_medications']
+      tStatistic, pValue = stats.ttest_ind(trueReadmPerMediciation, falseReadmPerMediciation)
+      print(tStatistic, pValue)
+
+      # p-value = 2.1451963e-50 which is smaller than significance value (0.05) which means There is a statistically
+      # significant difference in the average number of mediciations between readmitted and non-readmitted patients.
+      # This suggests that the number of mediciations is associated with readmission probability in your dataset.
+
+      # calcuating correlation between the three columns 
+      correlationMatrix = df[['was_readmitted', 'num_medications', 'num_lab_procedures']].corr()
+      print(correlationMatrix)
+      plt.figure(figsize=(8, 6))
+      sns.heatmap(correlationMatrix,annot=True,cmap='coolwarm',vmin=0.039253,vmax=1)
+      plt.title("Correlation Heatmap")
+      plt.show()
+
+      # based on the correlation matrix, there is a weak positive correlation between readmission
+      #  and num of procedures pair and the readmission and num of medications
+
+      # now the last thing is to plot the box plots of the values for each column
+      plt.figure(figsize=(10, 6))
+      sns.boxplot(data=df, x='was_readmitted', y='num_lab_procedures')
+      plt.xlabel('Was Readmitted')
+      plt.ylabel('Number of Lab Procedures')
+      plt.title('Distribution of Lab Procedures by Readmission Status')
+      plt.tight_layout()
+
+      # Boxplot for num_medications by readmission status
+      plt.figure(figsize=(10, 6))
+      sns.boxplot(data=df, x='was_readmitted', y='num_medications')
+      plt.xlabel('Was Readmitted')
+      plt.ylabel('Number of Medications')
+      plt.title('Distribution of Medications by Readmission Status')
+      plt.tight_layout()
+      plt.show()
+
+
+      
+
             
 
       
