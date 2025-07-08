@@ -61,9 +61,8 @@ The **Hospital Readmission Risk Analyzer** is a healthcare analytics project foc
 - **Sample Questions:**
   1. Which three departments (`medical_specialty`) have the highest readmission rates, adjusting for age groups?
   2. What is the average length of stay for each admission type?
-  3. Which medication combinations are most common among readmitted patients?
-  4. What is the readmission rate by insurance type (`payer_code`)?
-  5. Which diagnoses (`diag_1`) are most frequently associated with readmissions?
+  3. What is the readmission rate by insurance type (`payer_code`)?
+  4. Which diagnoses (`diag_1`) are most frequently associated with readmissions?
 
 ### 3. Statistics
 

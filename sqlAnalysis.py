@@ -29,7 +29,7 @@ def cleanDataForLoading(dataPath: str) -> None:
 # cleanDataForLoading("data/diabetes_cleaned.csv")
 
 
-# Esablishing a connection
+# Establishing a connection
 connection = psycopg2.connect(database="Hospital_Readmission_Risk",host="localhost",user="postgres",
                               password="postgres",port="5433")
 cursor = connection.cursor()
@@ -136,7 +136,7 @@ for row in rows:
       print(row)
       
 # the top 3 departments per readmission rate based on age groups 
-# are Pediatrics-AllergyandImmunology, Dermatology and Pediatrics-InfectiousDiseases
+# are Pediatrics-Allergy and Immunology, Dermatology and Pediatrics-InfectiousDiseases
 
 #  What is the average length of stay for each readmission type and for each admission type?
 
@@ -168,13 +168,52 @@ rows = cursor.fetchall()
 for row in rows:
       print(row)
 
-# Which medication combinations are most common among readmitted patients?
-
-
-
-
-
-
 
 # What is the readmission rate by insurance type (payer_code)?
+cursor.execute("""
+SELECT
+	payer_code,
+    COUNT(CASE WHEN readmitted != 'NO' THEN 1 END)::float / COUNT(*) AS readmission_rate
+FROM
+	diabetes_hospital_data
+WHERE 
+	payer_code is not Null
+GROUP BY
+	payer_code
+ORDER BY
+	readmission_rate DESC
+""")
+
+rows = cursor.fetchall()
+for row in rows:
+      print(row)
+
+# The top three insurance type according to readmission rate are MP, DM, MC
+
+
 # Which diagnoses (diag_1) are most frequently associated with readmissions?
+cursor.execute("""
+SELECT 
+    CASE 
+        WHEN diag_1 BETWEEN '250.00' AND '250.99' THEN 'Diabetes'
+        WHEN diag_1 BETWEEN '401.0' AND '401.9' THEN 'Hypertension'
+        WHEN diag_1 = '428.0' THEN 'Heart Failure'
+        ELSE 'Other'
+    END AS diagnosis_category,
+    COUNT(*) AS readmission_count
+FROM
+    diabetes_hospital_data
+WHERE
+    readmitted != 'NO'
+GROUP BY
+    diagnosis_category
+ORDER BY
+    readmission_count DESC;
+""")
+
+rows = cursor.fetchall()
+for row in rows:
+      print(row)
+
+# the number of readmission per other diseases other than diabetes is nearly 43000 while the diabetes
+# itself is estimated by nearly 4400 readmissions
