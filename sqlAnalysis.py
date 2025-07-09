@@ -1,5 +1,10 @@
 import psycopg2
 import pandas as pd
+import streamlit as st
+
+# region Functions
+# Functions
+#================================/
 
 # cleaning the data
 def cleanDataForLoading(dataPath: str) -> None:
@@ -26,7 +31,25 @@ def cleanDataForLoading(dataPath: str) -> None:
       # Replace '? with None (interpreted as NULL in SQL)
       df.replace('?', None, inplace=True)
 
-# cleanDataForLoading("data/diabetes_cleaned.csv")
+
+# creating a df from queries:
+def createDataFrameFromQuery(queryRows: list, index: list)-> pd.DataFrame:
+      query = {}
+      for row in queryRows:
+        query[row[0]] = [row[1]]
+      return pd.DataFrame(query, index=index)
+
+# inserting all the values from our CSV file
+def insertRecordsIntoTable(cursor) -> None:
+      with open('data/diabetes_cleaned.csv', 'r') as f:
+            next(f)  # Skip the header
+            cursor.copy_expert("""
+                  COPY diabetes_hospital_data FROM STDIN WITH CSV HEADER DELIMITER ','
+            """, f)
+
+# End Functions
+# =======================================/
+# endregion
 
 
 # Establishing a connection
@@ -89,25 +112,9 @@ CREATE TABLE IF NOT EXISTS diabetes_hospital_data (
 
 connection.commit()
 
-# inserting all the values from our CSV file
-def insertRecordsIntoTable(cursor) -> None:
-      with open('data/diabetes_cleaned.csv', 'r') as f:
-            next(f)  # Skip the header
-            cursor.copy_expert("""
-                  COPY diabetes_hospital_data FROM STDIN WITH CSV HEADER DELIMITER ','
-            """, f)
 
-# insertRecordsIntoTable(cursor=cursor)
-cursor.execute('''
-SELECT * FROM diabetes_hospital_data LIMIT 1
-''')
-
-rows = cursor.fetchall()
-for row in rows:
-      print(row)
-
-
-# Which three departments (medical_specialty) have the highest readmission rates, adjusting for age groups ?
+# Which three departments (medical_specialty) have the highest readmission rates,
+#  adjusting for age groups ?
 cursor.execute("""
 SELECT
     medical_specialty,
@@ -131,9 +138,9 @@ ORDER BY
 LIMIT 3;
 """)
 
-rows = cursor.fetchall()
-for row in rows:
-      print(row)
+dfQ1 = createDataFrameFromQuery(queryRows=cursor.fetchall(), index=['Readmission Rate'])
+print(dfQ1.head())
+
       
 # the top 3 departments per readmission rate based on age groups 
 # are Pediatrics-Allergy and Immunology, Dermatology and Pediatrics-InfectiousDiseases
@@ -150,9 +157,8 @@ cursor.execute("""
             readmitted
 """)
 
-rows = cursor.fetchall()
-for row in rows:
-      print(row)
+dfQ2 = createDataFrameFromQuery(queryRows=cursor.fetchall(), index=['Average Time in Hospital'])
+print(dfQ2.head())
 
 cursor.execute("""
       SELECT
@@ -164,9 +170,8 @@ cursor.execute("""
       admission_type_id
 """)
 
-rows = cursor.fetchall()
-for row in rows:
-      print(row)
+dfQ3 = createDataFrameFromQuery(queryRows=cursor.fetchall(), index=['Average Time in Hospital'])
+print(dfQ3.head())
 
 
 # What is the readmission rate by insurance type (payer_code)?
@@ -184,9 +189,8 @@ ORDER BY
 	readmission_rate DESC
 """)
 
-rows = cursor.fetchall()
-for row in rows:
-      print(row)
+dfQ4 = createDataFrameFromQuery(queryRows=cursor.fetchall(), index=['Readmission Rate'])
+print(dfQ4.head())
 
 # The top three insurance type according to readmission rate are MP, DM, MC
 
@@ -211,9 +215,32 @@ ORDER BY
     readmission_count DESC;
 """)
 
-rows = cursor.fetchall()
-for row in rows:
-      print(row)
+dfQ5 = createDataFrameFromQuery(queryRows=cursor.fetchall(), index=['readmission_count'])
+print(dfQ5.head())
 
 # the number of readmission per other diseases other than diabetes is nearly 43000 while the diabetes
 # itself is estimated by nearly 4400 readmissions
+
+if __name__ == "__main__":
+      st.title("SQL Analysis For The Readmission Risk Data \n\
+               # Source: [Diabetes 130-US Hospitals for Years 1999-2008]\n\
+               # Link:['https://archive.ics.uci.edu/dataset/296/diabetes+130-us+hospitals+for+years+1999-2008']")
+      st.text("So we started by cleaning the data and reorganizing the columns names in order"
+              " to map the data to a SQL table without compilications.")
+      st.text("Q1: Which three departments (medical_specialty) have the highest readmission rates adjusting for age groups ?")
+      st.dataframe(dfQ1)
+      st.bar_chart(data=dfQ1, horizontal=False)
+      st.text("Conclusion: the top 3 departments per readmission rate based on age groups are Pediatrics-Allergy and Immunology, Dermatology and Pediatrics-InfectiousDiseases")
+      st.text("Q2: What is the average length of stay for each readmission type and for each admission type?")
+      st.dataframe(dfQ2)
+      st.dataframe(dfQ3)
+      st.text("Q3: What is the readmission rate by insurance type (payer_code)?")
+      st.dataframe(dfQ4)
+      st.text("Conclusion: The top three insurance type according to readmission rate are MP, DM, MC")
+      st.bar_chart(dfQ4)
+      st.text("Q4: Which diagnoses (diag_1) are most frequently associated with readmissions?")
+      st.dataframe(dfQ5)
+      st.bar_chart(dfQ5)
+      st.text("Conclusion: the number of readmission per other diseases other than diabetes is nearly 43000 while the diabetes" 
+              " itself is estimated by nearly 4400 readmissions")
+
