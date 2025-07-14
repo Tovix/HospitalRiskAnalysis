@@ -1,7 +1,9 @@
+import io
 import ucimlrepo
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import streamlit as st
 from scipy import stats
 import matplotlib.pyplot as plt
 
@@ -21,43 +23,55 @@ def changeColsType(df: pd.DataFrame, columns:list, type: str) -> None:
             df[column] = df[column].astype(type)
 
 if __name__ == "__main__":
+      st.title("Diabetes 130-US Hospitals for Years 1999-2008 Data cleaning EDA\n_____________________________________")
+      st.subheader("The main DataFrame before any modification:")
       df = pd.read_csv('data/diabetic_data.csv')
-      print(df.head())
-      print(nullChecker(df))
-      # from the null checking we can conclude that the two main cols with missing vals are
-      # A1Cresult, max_glu_serum, we shall exmaine them seperately.
-      print(df[['max_glu_serum', 'A1Cresult']].value_counts())
-      print(df['max_glu_serum'].unique())
-      print(df['A1Cresult'].unique())
-      # replace nan values with untested
+      st.dataframe(df)
+      st.subheader("The dataFrame head:")
+      st.dataframe(df.head())
+      st.subheader("Checking null values in the DataFrame:")
+      st.dataframe(nullChecker(df))
+      st.text("From the null checking we can conclude that the two main cols with missing vals are A1Cresult,"
+              "max_glu_serum, we shall exmaine them seperately.")
+      st.text("max_glu_serum, A1Cresult values count:")
+
+      st.dataframe(df[['max_glu_serum', 'A1Cresult']].value_counts())
+      st.text("max_glu_serum unique values:")
+      st.dataframe(df['max_glu_serum'].unique())
+      st.text("A1Cresult unique values:")
+      st.dataframe(df['A1Cresult'].unique())
+      st.subheader("replace nan values with 'untested'")
       df.replace({'max_glu_serum': {np.nan : "untested"}, 'A1Cresult': {np.nan: "untested"}}, inplace=True)
-      print(df['max_glu_serum'].unique())
-      print(df['A1Cresult'].unique())
-      # we are done dealing with the null values, We move on to check other columns and their values
-      print(df.info())
-      # we check the gender column as it's type is object and since it's categorical data we should
-      # change to to categories, same for races
-      print(df['gender'].unique())
+      st.text("we are done dealing with the null values, We move on to check other columns and their values")
+      st.text("__________________________________________________________________________________")
+      buffer = io.StringIO()
+      df.info(buf=buffer)
+      s = buffer.getvalue()
+      st.text(s)
+      st.text("__________________________________________________________________________________")
+      st.text("we check the gender column as it's type is object and since it's categorical data we should change to to categories, same for races")
+      st.text("Gender column unique values:")
+      st.dataframe(df['gender'].unique())
       df['gender'] = df['gender'].astype('category')
-      print(df['race'].value_counts())
-      # we notice that we got '?' among the categories so we replace it with 'Other' and change the 
-      # the type of the column to cateogry
+      st.text("Race Column values count:")
+      st.dataframe(df['race'].value_counts())
+      st.text("we notice that we got '?' among the categories so we replace it with 'Other' and change the the type of the column to cateogry")
       df.replace({'race': {'?': 'Other'}}, inplace=True)
-      # Now we move on to checking the uniqueness of both the visit id
-      print(df.shape[0])
-      print(df['encounter_id'].nunique())
-      # we move on to the admission_type_id to check it 
-      print(df['admission_type_id'].unique())
-      print(df[df['admission_type_id'] == 8]['diag_1'].head(10))
-      # we discover an important fact and it's as the admission type is ordered by ranking from 
-      # least dangerous eg. rank : '1' to life threating admission eg. rank 8 based on the diag_1
-      # col where the ICD-9 codes refer to the medical diagonsis based on a code system 
-      # on checking this values we find that admission_id with high ranks such 8 is diagnosed with 
-      # life-threating diseases so we map the values from 1 to 8 as the following:
+      st.text("Now we move on to checking the uniqueness of both the visit id and all values are unique so we move on.")
+      df.shape[0]
+      df['encounter_id'].nunique()
+      st.text("we move on to the admission_type_id to check it") 
+      st.dataframe(df['admission_type_id'].unique())
+      st.dataframe(df[df['admission_type_id'] == 8]['diag_1'].head(10))
+      st.text("we discover an important fact and it's as the admission type is ordered by ranking from least dangerous eg."
+              "rank : '1' to life threating admission eg. rank 8 based on the diag_1 col where the ICD-9 codes refer to "
+              " the medical diagonsis based on a code system on checking this values we find that admission_id with high ranks such 8 is diagnosed with "
+              " life-threating diseases so we map the values from 1 to 8 as the following:")
       admissionTypes = {1: 'referral from clinic', 2: 'pyschiatric emergency', 3: 'minor care',
                          4: 'non-urgent', 5: 'semi-urgent', 6:'urgent', 7: 'emergent', 8: 'resuscitation'}
       df['admission_type_id'] = df['admission_type_id'].map(admissionTypes).astype('category')
-      print(df['admission_type_id'].unique())
+      st.text("admission_type_id column unique values after mapping values:")
+      st.dataframe(df['admission_type_id'].unique())
       # We shall now check the age, weight columns
       print(df['age'].unique())
       print(df['weight'].unique())
