@@ -42,14 +42,14 @@ if __name__ == "__main__":
       st.dataframe(df['A1Cresult'].unique())
       st.subheader("replace nan values with 'untested'")
       df.replace({'max_glu_serum': {np.nan : "untested"}, 'A1Cresult': {np.nan: "untested"}}, inplace=True)
-      st.text("we are done dealing with the null values, We move on to check other columns and their values")
+      st.subheader("we are done dealing with the null values, We move on to check other columns and their values")
       st.text("__________________________________________________________________________________")
       buffer = io.StringIO()
       df.info(buf=buffer)
       s = buffer.getvalue()
       st.text(s)
       st.text("__________________________________________________________________________________")
-      st.text("we check the gender column as it's type is object and since it's categorical data we should change to to categories, same for races")
+      st.subheader("we check the gender column as it's type is object and since it's categorical data we should change to to categories, same for races")
       st.text("Gender column unique values:")
       st.dataframe(df['gender'].unique())
       df['gender'] = df['gender'].astype('category')
@@ -60,7 +60,7 @@ if __name__ == "__main__":
       st.text("Now we move on to checking the uniqueness of both the visit id and all values are unique so we move on.")
       df.shape[0]
       df['encounter_id'].nunique()
-      st.text("we move on to the admission_type_id to check it") 
+      st.subheader("we move on to the admission_type_id to check it") 
       st.dataframe(df['admission_type_id'].unique())
       st.dataframe(df[df['admission_type_id'] == 8]['diag_1'].head(10))
       st.text("we discover an important fact and it's as the admission type is ordered by ranking from least dangerous eg."
@@ -78,20 +78,15 @@ if __name__ == "__main__":
       # now we replace the '?' from the weights with not-recorded as it's more informative and we change
       # both types to categorical
       df.replace({'weight': {'?': 'not-recorded'}}, inplace=True)
-      # now we drop all the medicine-related cols 
       medication_columns = ['metformin', 'repaglinide', 'nateglinide', 'chlorpropamide', 'glimepiride',
                         'acetohexamide', 'glipizide', 'glyburide', 'tolbutamide', 'pioglitazone',
                         'rosiglitazone', 'acarbose', 'miglitol', 'troglitazone', 'tolazamide',
                         'examide', 'citoglipton', 'glyburide-metformin', 'glipizide-metformin',
                         'glimepiride-pioglitazone', 'metformin-rosiglitazone', 'metformin-pioglitazone']
-      
-      # df.drop(columns=medication_columns, inplace=True)
-      print(df.info())
-      # Now we move on to the analysis of the discharge_disposition_id column
-      print(sorted(list(df['discharge_disposition_id'].unique())))
-      # so we knew those values ranging from 1 to 29 representing the degree of the disposition 
-      # so we generated a list with values matching from 1 to 29 and we are going to do the same thing
-      # we did with adimission type
+      st.subheader("Now we move on to the analysis of the discharge_disposition_id column")
+      st.text(sorted(list(df['discharge_disposition_id'].unique())))
+      st.text("# so we knew those values ranging from 1 to 29 representing the degree of the disposition so we generated a "
+              " list with values matching from 1 to 29 and we are going to do the same thing we did with adimission type")
       discharge_disposition_ranked = {
     29: "29-Home(RoutineDischarge)",
     28: "28-HomeWithHomeHealthServices",
@@ -123,13 +118,13 @@ if __name__ == "__main__":
     2: "2-ForensicCustodialFacility",
     1: "1-Nowhere(AbandonedUnclaimed)"
 }
-      # now, we will check the diag_1 in coresponse with discharged_position
-      print(df[df['admission_type_id'] == 'resuscitation'][['diag_1', 'discharge_disposition_id']].head(20))
+      st.subheader("now, we will check the diag_1 in coresponse with discharged_position")
+      st.dataframe(df[df['admission_type_id'] == 'resuscitation'][['diag_1', 'discharge_disposition_id']].head(20))
       df['discharge_disposition_id'] = df['discharge_disposition_id'].map(discharge_disposition_ranked)
-      print(df.info())
-      # now we check the admission_source_id and map values:
-      print(sorted(list(df['admission_source_id'].unique())))
-      print(df[df['admission_type_id'] == 'resuscitation'][['diag_1', 'admission_source_id']].head(20))
+      st.subheader("now we check the admission_source_id and map values:")
+      st.text(sorted(list(df['admission_source_id'].unique())))
+      st.dataframe(df[df['admission_type_id'] == 'resuscitation'][['diag_1', 'admission_source_id']].head(20))
+      st.dataframe(df['discharge_disposition_id'].unique())
       admission_source_ranked = {
     # Top 5 Common Sources
     1: "1-EmergencyRoom",
@@ -163,68 +158,65 @@ if __name__ == "__main__":
     
     # Rare Cases
     25: "25-InternationalTransfer"
-}
+}     
       df['admission_source_id'] = df['admission_source_id'].map(admission_source_ranked)
-      print(df.info())
-      # now we check the time hospital column, conclusion we move on it doesn't need anything:
-      print(df['time_in_hospital'].unique())
-      # now we check payer_code column, conclusion it does have the '?' which we will replace with other:
+      st.subheader("now, we will check the addmission_source_id column after remapping")
+      st.dataframe(df['admission_source_id'].unique())
+      st.subheader("Now we check the time hospital column, conclusion we move on it doesn't need anything.")
+      st.dataframe(df['time_in_hospital'].unique())
+      st.subheader("Now we check payer_code column, conclusion it does have the '?' which we will replace with others:")
       df.replace({"payer_code": {'?': 'Others'}}, inplace=True)
-      print(df['payer_code'].unique())
-      # now we we check the medical_specialty column, conclusion same as payer_code:
+      st.dataframe(df['payer_code'].unique())
+      st.subheader("now we we check the medical_specialty column, conclusion same as payer_code:")
       df.replace({"medical_specialty" : {'?': 'Others'}}, inplace=True)
-      print(df['medical_specialty'].unique())
-      # now we check the numerical values [from col:12 to col:17], conculsion: good to go !
-      print(df.iloc[:, 12: 18].nunique())
-      # the diag_1, diag_2, diag_3 are object types we change them to categorical per columns description
-      # the number_diagnoses column is the same as cols from 12 to 17, we move to max_glu_serum col:
-      print(df['max_glu_serum'].unique())
-      # changing all columns with categorical features all once at a time, any column not mentioned above
-      # doesn't have any problem just it was wrong typed as object and changed to 'category'
+      st.dataframe(df['medical_specialty'].unique())
+      st.subheader("now we check the numerical values [from col:12 to col:17], conculsion: Nothing unsual.")
+      st.text(df.iloc[:, 12: 18].nunique())
+      st.subheader("the diag_1, diag_2, diag_3 are object types we change them to categorical per columns description "
+      "the number_diagnoses column is the same as cols from 12 to 17, we move to max_glu_serum col:")
+      st.subheader("changing all columns with categorical features all once at a time, any column not mentioned above"
+      "doesn't have any problem just it was wrong typed as object and changed to 'category'")
       df['max_glu_serum'] = df['max_glu_serum'].astype('category')
       changeColsType(df=df, columns=['race', 'gender', 'age', 'weight', 'admission_type_id',
                                       'discharge_disposition_id', 'admission_source_id', 'payer_code',
                                       'medical_specialty', 'diag_1', 'diag_2', 'diag_3', 'max_glu_serum',
                                         'A1Cresult', 'insulin', 'change', 'diabetesMed', 'readmitted'],
                                         type='category')
-      print(df.info())
-      # Now to answer the questions on task one:
-      # 1 - Which medications are most associated with lower readmission rates ?
-      print(df['readmitted'].unique())
+      st.header("Now to answer the questions on task one:")
+      st.subheader("1 - Which medications are most associated with lower readmission rates ?")
       medperAdm = df.groupby(['readmitted'])[medication_columns].\
             apply(lambda x : x.apply(pd.Series.value_counts).sum()).\
       sort_values(by=medication_columns, ascending=True).reset_index()
-      print(medperAdm)
+      st.dataframe(medperAdm)
 
-      # plotting the result 
+      st.text("Plotting the result:")
       medCounts = df.melt(id_vars='readmitted', value_vars=medication_columns, 
                      var_name='medication', value_name='status')
-      print(medCounts['status'].unique())
       medCounts = medCounts[medCounts['status'] != 'No']  
       plotData = medCounts.groupby(['medication', 'readmitted']).size().reset_index(name='count')
-      print(plotData)
-
       plt.figure(figsize=(16, 6))
       sns.barplot(data=plotData, x='medication', y='count', hue='readmitted')
       plt.xticks(rotation=90)
       plt.title('Medication Usage by Readmission Status')
       plt.tight_layout()
+      st.pyplot(plt,clear_figure=True, use_container_width=False)
+      st.subheader("Based on the chart, Metformin, Glipizide, Pioglitazone, and Rosiglitazone appear to be the medications"
+                   "most associated with lower hospital readmission rates.")
 
-      # 2 - How does length of stay (time_in_hospital) affect readmission risk ?
-      print(df['time_in_hospital'].unique())
+      st.subheader("2 - How does length of stay (time_in_hospital) affect readmission risk ?")
       timePerReadmission = df.groupby(['readmitted']).\
       agg({"time_in_hospital": 'mean'}).\
       sort_values(by="time_in_hospital", ascending=False)
-      print(timePerReadmission)
+      st.dataframe(timePerReadmission)
 
-      # plotting the result
+      st.text("Plotting the result:")
       plt.figure(figsize=(16, 6))
       sns.boxplot(data=df, x='readmitted', y='time_in_hospital', hue='readmitted')
       plt.xticks(rotation=90)
       plt.title('boxplot of hours per readmittion status')
       plt.tight_layout()
-
-      # since it seems there are outliers, let's remove them and see the plots again
+      st.pyplot(plt, clear_figure=True)
+      st.text("since it seems there are outliers, let's remove them and see the plots again")
       q1 = df['time_in_hospital'].quantile(0.25)
       q3 = df['time_in_hospital'].quantile(0.75)
       IQR = q3 - q1
@@ -239,16 +231,17 @@ if __name__ == "__main__":
       plt.xticks(rotation=90)
       plt.title('boxplot of hours per readmittion status with no outliers')
       plt.tight_layout()
-      # plt.show()
-      # final conclusion : Length of stay does not appear to be strongly associated with 
-      # readmission status in this dataset.
+      st.pyplot(plt, clear_figure=True)
+      st.subheader("final conclusion : Length of stay does not appear to be strongly associated with" 
+      " readmission status in this dataset.")
 
-      # 3 - Are there differences in readmission rates by age group or gender ?
+      st.subheader("3 - Are there differences in readmission rates by age group or gender ?")
       df['was_readmitted'] = df['readmitted'].isin(['<30', '>30'])
 
       ageReadmitRate = df.groupby('age')['was_readmitted'].mean().reset_index()
       genderReadmitRate = df.groupby('gender')['was_readmitted'].mean().reset_index()
-
+      st.dataframe(ageReadmitRate)
+      st.dataframe(genderReadmitRate)
       # Plot the readmission rate by age group
       fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 6))
       sns.barplot(data=ageReadmitRate, x='age', y='was_readmitted', ax=axes[0, 0])
@@ -259,15 +252,16 @@ if __name__ == "__main__":
       axes[0, 1].set_ylabel('Readmission Rate')
       axes[0, 1].set_xlabel('Gender Group')
       axes[0, 1].set_title('Readmission Rate by Gender Group')
+      st.pyplot(plt, clear_figure=True)
 
-      # The likelihood of being readmitted to the hospital increases with patient age, 
-      # especially for those over 60, Females have a higher readmission rate than males.   
+      st.subheader("The likelihood of being readmitted to the hospital increases with patient age, "
+      "especially for those over 60, Females have a higher readmission rate than males.")  
 
-      # 4 - What is the distribution of primary diagnoses (diag_1) among readmitted patients ?
+      st.subheader("4 - What is the distribution of primary diagnoses (diag_1) among readmitted patients ?")
       diag1ReadmitRate = df.groupby('was_readmitted')['diag_1'].value_counts().reset_index().\
       sort_values(by='count', ascending=False)
+      st.dataframe(diag1ReadmitRate)
       pltData = diag1ReadmitRate[diag1ReadmitRate['was_readmitted'] == True].head(10)
-      print(pltData)
       pltData['diag_1'] = pltData['diag_1'].astype(str).str.strip()
       plt.figure(figsize=(12, 10))  # Increase height
       sns.barplot(data=pltData, y='diag_1', x='count', orient='h')
@@ -276,26 +270,29 @@ if __name__ == "__main__":
       plt.title('Top 10 Primary Diagnoses Among Readmitted Patients')
       plt.yticks(fontsize=10)  # Reduce font size
       plt.tight_layout()
-      # plt.show()
-      # final conclusion 428, 414 are the most diagnosis per readmitted patients
+      st.pyplot(plt, clear_figure=True)
+      st.subheader("Final conclusion 428, 414 are the most diagnosis per readmitted patients")
 
-      # 5 - How do the number of lab procedures or medications relate to readmission probability ?
+      st.subheader("5 - How do the number of lab procedures or medications relate to readmission probability ?")
       readmittedOnly = df[df['was_readmitted'] == True]
 
       readmittedOnlyPerLab = df.groupby('was_readmitted')['num_lab_procedures'].mean().\
       reset_index(name='mean').sort_values(by="mean", ascending=False)
-      print(readmittedOnlyPerLab)
 
       readmittedOnlyPerMed = df.groupby('was_readmitted')['num_medications'].mean().\
       reset_index(name='mean').sort_values(by="mean", ascending=False)
-      print(readmittedOnlyPerMed)
+      
+      st.dataframe(readmittedOnlyPerLab)
+      st.dataframe(readmittedOnlyPerMed)
 
       plt.figure(figsize=(12, 10))  
       sns.barplot(data=readmittedOnlyPerLab, y='was_readmitted', x='mean', orient='h')
       plt.xlabel('Readmission Counts')
       plt.ylabel('Number of procedures mean')
       plt.title('Number of procedures mean Vs Readmission Rate')
-      plt.yticks(fontsize=10)  
+      plt.yticks(fontsize=10)
+      
+      st.pyplot(plt, clear_figure=True) 
 
       plt.figure(figsize=(12, 10))  
       sns.barplot(data=readmittedOnlyPerMed, y='was_readmitted', x='mean', orient='h')
@@ -304,55 +301,56 @@ if __name__ == "__main__":
       plt.title('Number of Medications mean Vs Readmission Rate')
       plt.yticks(fontsize=10)  
       plt.tight_layout()
-      plt.show()
+      st.pyplot(plt, clear_figure=True)
 
-      # statisical test (t test)
+      st.subheader("statisical test (t test)")
       trueReadmPerLabProcedures = df[df['was_readmitted'] == True]['num_lab_procedures']
       falseReadmPerLabProcedures = df[df['was_readmitted'] == False]['num_lab_procedures']
       tStatistic, pValue = stats.ttest_ind(trueReadmPerLabProcedures, falseReadmPerLabProcedures)
-      print(tStatistic, pValue)
+      st.text("T-Stat: {} pValue: {}".format(tStatistic, pValue))
 
-      # p-value = 5.3321e-36 which is smaller than significance value (0.05) which means There is a statistically
-      # significant difference in the average number of lab procedures between readmitted and non-readmitted patients.
-      # This suggests that the number of lab procedures is associated with readmission probability in your dataset.
+      st.subheader(" p-value = 5.3321e-36 which is smaller than significance value (0.05) which means There is a statistically"
+      " significant difference in the average number of lab procedures between readmitted and non-readmitted patients."
+      " This suggests that the number of lab procedures is associated with readmission probability in your dataset.")
 
 
       trueReadmPerMediciation = df[df['was_readmitted'] == True]['num_medications']
       falseReadmPerMediciation = df[df['was_readmitted'] == False]['num_medications']
       tStatistic, pValue = stats.ttest_ind(trueReadmPerMediciation, falseReadmPerMediciation)
-      print(tStatistic, pValue)
+      st.text("T-Stat: {} pValue: {}".format(tStatistic, pValue))
 
-      # p-value = 2.1451963e-50 which is smaller than significance value (0.05) which means There is a statistically
-      # significant difference in the average number of mediciations between readmitted and non-readmitted patients.
-      # This suggests that the number of mediciations is associated with readmission probability in your dataset.
+      st.subheader(" p-value = 2.1451963e-50 which is smaller than significance value (0.05) which means There is a statistically"
+      " significant difference in the average number of mediciations between readmitted and non-readmitted patients."
+      " This suggests that the number of mediciations is associated with readmission probability in your dataset.")
 
-      # calcuating correlation between the three columns 
+      st.subheader("calcuating correlation between the three columns")
       correlationMatrix = df[['was_readmitted', 'num_medications', 'num_lab_procedures']].corr()
-      print(correlationMatrix)
+      st.text(correlationMatrix)
       plt.figure(figsize=(8, 6))
       sns.heatmap(correlationMatrix,annot=True,cmap='coolwarm',vmin=0.039253,vmax=1)
       plt.title("Correlation Heatmap")
-      plt.show()
+      st.pyplot(plt)
+      
+      st.subheader(" based on the correlation matrix, there is a weak positive correlation between readmission"
+      " and num of procedures pair and the readmission and num of medications")
 
-      # based on the correlation matrix, there is a weak positive correlation between readmission
-      #  and num of procedures pair and the readmission and num of medications
-
-      # now the last thing is to plot the box plots of the values for each column
+      st.subheader("now the last thing is to plot the box plots of the values for each column")
       plt.figure(figsize=(10, 6))
       sns.boxplot(data=df, x='was_readmitted', y='num_lab_procedures')
       plt.xlabel('Was Readmitted')
       plt.ylabel('Number of Lab Procedures')
       plt.title('Distribution of Lab Procedures by Readmission Status')
       plt.tight_layout()
+      st.pyplot(plt)
 
-      # Boxplot for num_medications by readmission status
+      st.subheader("Boxplot for num_medications by readmission status")
       plt.figure(figsize=(10, 6))
       sns.boxplot(data=df, x='was_readmitted', y='num_medications')
       plt.xlabel('Was Readmitted')
       plt.ylabel('Number of Medications')
       plt.title('Distribution of Medications by Readmission Status')
       plt.tight_layout()
-      plt.show()
+      st.pyplot(plt)
 
 
       
