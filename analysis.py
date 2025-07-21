@@ -6,6 +6,8 @@ import seaborn as sns
 import streamlit as st
 from scipy import stats
 import matplotlib.pyplot as plt
+from statsmodels.stats.contingency_tables import Table2x2
+from statsmodels.stats.proportion import test_proportions_2indep
 
 # fetch data for the first runtime
 def fetchDataset() -> ucimlrepo.dotdict:
@@ -305,6 +307,7 @@ if __name__ == "__main__":
 
       st.subheader("statisical test (t test)")
       trueReadmPerLabProcedures = df[df['was_readmitted'] == True]['num_lab_procedures']
+      st.dataframe(trueReadmPerLabProcedures)
       falseReadmPerLabProcedures = df[df['was_readmitted'] == False]['num_lab_procedures']
       tStatistic, pValue = stats.ttest_ind(trueReadmPerLabProcedures, falseReadmPerLabProcedures)
       st.text("T-Stat: {} pValue: {}".format(tStatistic, pValue))
@@ -352,7 +355,115 @@ if __name__ == "__main__":
       plt.tight_layout()
       st.pyplot(plt)
 
+      # solving the statisical part in the project:
+      st.header("Statisical Questions:")
+      st.subheader("Q1: Is there a statistically significant difference in readmission"
+                   " rates between patients who had their diabetes medication changed during admission and"
+                   "those who did not?")
+      
+      st.subheader("statisical test (chi-square test)")
+      st.text("null hypothesis: there is a no association between readmission rate and mediciation change")
+      st.text("alternative hypothesis: there is an association between readmission rate and mediciation change")
+      df['readmitted'] = df['readmitted'].map({">30": "Yes", "<30": "Yes", "NO": "No"})
+      contingencyTable = pd.crosstab(df['readmitted'], df['change'])
+      st.dataframe(contingencyTable)
+      
+      chi2, pValue, dof, expected = stats.chi2_contingency(contingencyTable)
+      st.text("chi2:{}, p-values: {}, dof: {}".format(chi2, pValue, dof))
+      st.subheader("Since p-val: 1.362060823556665e-47, Reject H₀ → Significant evidence that medication changes affect readmission rates.")
+      
+      contingencyTable.plot(kind='bar', figsize=(8,6))
+      plt.xlabel('Readmission Status')
+      plt.ylabel('Number of Patients')
+      plt.title('Readmission Status by Medication Change')
+      plt.legend(title='Medication Changed')
+      plt.tight_layout()
+      st.pyplot(plt)
+      
+      st.subheader("Q2: What is the confidence interval for readmission rates before and after a specific intervention (e.g., medication change)?")
+      st.text("I will use Odds Ratio (OR) (for retrospective/case-control studies).")
+      # Subset the table (e.g., compare 'Yes' and 'No' rows)
+      subset = contingencyTable.loc[['Yes', 'No'], :]
+      table = Table2x2(subset.values)
 
+      # Odds Ratio with 95% CI
+      oddsratio = table.oddsratio
+      ciLow, ciHigh = table.oddsratio_confint()
+      st.subheader(f"Odds Ratio ('Yes', 'No'): {oddsratio:.2f} [{ciLow:.2f}, {ciHigh:.2f}]")
+      st.subheader("Patients whose diabetes medication was changed during hospitalization had 1.2 times higher odds of"
+                   " readmission compared to those without medication changes (OR = 1.20; 95% CI: 1.17–1.23). This association was statistically significant,"
+                   " suggesting that medication changes may modestly increase the risk of readmission.")
+      
+      st.subheader("Q3: Is there a significant difference in readmission rates between patients with and without comorbidities")
+      df['has_comorbidity'] = df.apply(
+      lambda row: any(val != '?' for val in [row['diag_2'], row['diag_3']]),axis=1)
+      st.dataframe(df[['diag_1', 'diag_2', 'diag_3', 'has_comorbidity']])
+      st.dataframe(df['has_comorbidity'].value_counts())
+      
+      st.subheader("statisical test (chi-square test)")
+      st.text("null hypothesis: there is a no association between readmission rate and comorbidities")
+      st.text("alternative hypothesis: there is an association between readmission rate and comorbidities")
+      contingencyTable = pd.crosstab(df['readmitted'], df['has_comorbidity'])
+      st.dataframe(contingencyTable)
+      
+      chi2, pValue, dof, expected = stats.chi2_contingency(contingencyTable)
+      st.text("chi2:{}, p-values: {}, dof: {}".format(chi2, pValue, dof))
+      st.subheader("Since p-val: 1.8934145321376148e-15, Reject H₀ → Significant evidence that comorbidities affect readmission rates.")
+      
+      contingencyTable.plot(kind='bar', figsize=(8,6))
+      plt.xlabel('Readmission Status')
+      plt.ylabel('Number of Patients')
+      plt.title('Readmission Status by comorbidities')
+      plt.legend(title='comorbidities')
+      plt.tight_layout()
+      st.pyplot(plt)
+      
+      df['readmitted'] = df['readmitted'].map({'Yes': True, 'No': False})
+      table = pd.crosstab(df['has_comorbidity'], df['readmitted'])
+      st.dataframe(table)
+      table_2x2 = Table2x2(table)
+
+      # Get OR and CI
+      odds_ratio = table_2x2.oddsratio
+      ci_low, ci_high = table_2x2.oddsratio_confint()
+
+      st.subheader(f"Odds Ratio: {odds_ratio:.2f} [{ci_low:.2f}, {ci_high:.2f}]")
+      st.subheader("Patients with comorbidities had 3 times higher odds of readmission compared to those without (OR = 3.00; 95% CI: 2.26–3.98).")
+      st.subheader("Q4: Does changing diabetes medication during admission affect readmission risk ?")
+      contingencyTable = pd.crosstab(df['readmitted'], df['change'])
+      st.dataframe(contingencyTable)
+      
+      # Swap rows and columns
+      def calculate_rr(cont_table):
+            # For your current format:
+            a = cont_table.loc[True, 'Ch']    # Readmitted + change
+            b = cont_table.loc[False, 'Ch']   # Not readmitted + change
+            c = cont_table.loc[True, 'No'] # Readmitted + no change
+            d = cont_table.loc[False, 'No']# Not readmitted + no change
+            
+            risk_change = a / (a + b)
+            risk_nochange = c / (c + d)
+            rr = risk_change / risk_nochange
+            
+            # Calculate 95% CI
+            log_rr = np.log(rr)
+            se = np.sqrt((1/a) - (1/(a+b)) + (1/c) - (1/(c+d)))
+            ci_low = np.exp(log_rr - 1.96*se)
+            ci_high = np.exp(log_rr + 1.96*se)
+            
+            return rr, (ci_low, ci_high)
+
+      rr, ci = calculate_rr(cont_table=contingencyTable)
+      st.subheader(f"Relative Risk: {rr:.2f} [95% CI: {ci[0]:.2f}, {ci[1]:.2f}]")
+      st.subheader("Changing diabetes medication during admission was associated with a" 
+                   " 10'%' higher risk of readmission (RR = 1.10, 95% CI: 1.09–1.12, p < 0.001). This effect was statistically significant and"
+                   " clinically relevant, suggesting that medication changes may modestly increase readmission likelihood") 
+      
+      st.subheader("Q5: Which patient demographic factors (such as age group, gender, or race) are most strongly associated with higher readmission rates?")
+      st.dataframe(df[['age', 'gender', 'race', 'readmitted']])
+      
+             
+      
       
 
             
