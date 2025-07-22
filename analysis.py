@@ -5,9 +5,9 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 from scipy import stats
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from statsmodels.stats.contingency_tables import Table2x2
-from statsmodels.stats.proportion import test_proportions_2indep
 
 # fetch data for the first runtime
 def fetchDataset() -> ucimlrepo.dotdict:
@@ -370,7 +370,7 @@ if __name__ == "__main__":
       
       chi2, pValue, dof, expected = stats.chi2_contingency(contingencyTable)
       st.text("chi2:{}, p-values: {}, dof: {}".format(chi2, pValue, dof))
-      st.subheader("Since p-val: 1.362060823556665e-47, Reject H₀ → Significant evidence that medication changes affect readmission rates.")
+      st.subheader("Conclusion: Since p-val: 1.362060823556665e-47, Reject H₀ → Significant evidence that medication changes affect readmission rates.")
       
       contingencyTable.plot(kind='bar', figsize=(8,6))
       plt.xlabel('Readmission Status')
@@ -390,7 +390,7 @@ if __name__ == "__main__":
       oddsratio = table.oddsratio
       ciLow, ciHigh = table.oddsratio_confint()
       st.subheader(f"Odds Ratio ('Yes', 'No'): {oddsratio:.2f} [{ciLow:.2f}, {ciHigh:.2f}]")
-      st.subheader("Patients whose diabetes medication was changed during hospitalization had 1.2 times higher odds of"
+      st.subheader("Conclusion: Patients whose diabetes medication was changed during hospitalization had 1.2 times higher odds of"
                    " readmission compared to those without medication changes (OR = 1.20; 95% CI: 1.17–1.23). This association was statistically significant,"
                    " suggesting that medication changes may modestly increase the risk of readmission.")
       
@@ -428,7 +428,7 @@ if __name__ == "__main__":
       ci_low, ci_high = table_2x2.oddsratio_confint()
 
       st.subheader(f"Odds Ratio: {odds_ratio:.2f} [{ci_low:.2f}, {ci_high:.2f}]")
-      st.subheader("Patients with comorbidities had 3 times higher odds of readmission compared to those without (OR = 3.00; 95% CI: 2.26–3.98).")
+      st.subheader("Conclusion: Patients with comorbidities had 3 times higher odds of readmission compared to those without (OR = 3.00; 95% CI: 2.26–3.98).")
       st.subheader("Q4: Does changing diabetes medication during admission affect readmission risk ?")
       contingencyTable = pd.crosstab(df['readmitted'], df['change'])
       st.dataframe(contingencyTable)
@@ -455,12 +455,66 @@ if __name__ == "__main__":
 
       rr, ci = calculate_rr(cont_table=contingencyTable)
       st.subheader(f"Relative Risk: {rr:.2f} [95% CI: {ci[0]:.2f}, {ci[1]:.2f}]")
-      st.subheader("Changing diabetes medication during admission was associated with a" 
+      st.subheader("Conclusion: Changing diabetes medication during admission was associated with a" 
                    " 10'%' higher risk of readmission (RR = 1.10, 95% CI: 1.09–1.12, p < 0.001). This effect was statistically significant and"
                    " clinically relevant, suggesting that medication changes may modestly increase readmission likelihood") 
       
       st.subheader("Q5: Which patient demographic factors (such as age group, gender, or race) are most strongly associated with higher readmission rates?")
       st.dataframe(df[['age', 'gender', 'race', 'readmitted']])
+      st.subheader("statisical test (chi-square test)")
+      st.text("null hypothesis: there is a no association between readmission rate and age/gender/race")
+      st.text("alternative hypothesis: there is an association between readmission rate and age/gender/race")
+      
+      contingencyTableAge = pd.crosstab(df['readmitted'], df['age'])
+      st.dataframe(contingencyTableAge)
+      contingencyTableGender = pd.crosstab(df['readmitted'], df['gender'])
+      st.dataframe(contingencyTableGender)
+      contingencyTableRace = pd.crosstab(df['readmitted'], df['race'])
+      st.dataframe(contingencyTableRace)
+      
+      AgeChi2, AgePValue, AgeDof, AgeExpected = stats.chi2_contingency(contingencyTableAge)
+      GenChi2, GenPValue, GenDof, GenExpected = stats.chi2_contingency(contingencyTableGender)
+      RaceChi2, RacePValue, RaceDof, RaceExpected = stats.chi2_contingency(contingencyTableRace)
+      
+      
+      
+      st.text("Age, chi2:{}, p-values: {}, dof: {}".format(AgeChi2, AgePValue, AgeDof))
+      contingencyTableAge.plot(kind='bar', figsize=(8,6))
+      plt.xlabel('Readmission Status')
+      plt.ylabel('Number of Patients')
+      plt.title('Readmission Status by Age')
+      plt.legend(title='Age')
+      plt.tight_layout()
+      st.pyplot(plt)
+      
+      st.text("Gender, chi2:{}, p-values: {}, dof: {}".format(GenChi2, GenPValue, GenDof))
+      contingencyTableGender.plot(kind='bar', figsize=(8,6))
+      plt.xlabel('Readmission Status')
+      plt.ylabel('Number of Patients')
+      plt.title('Readmission Status by Gender')
+      plt.legend(title='Gender')
+      plt.tight_layout()
+      st.pyplot(plt)
+      
+      st.text("Race, chi2:{}, p-values: {}, dof: {}".format(RaceChi2, RacePValue, RaceDof))
+      contingencyTableRace.plot(kind='bar', figsize=(8,6))
+      plt.xlabel('Readmission Status')
+      plt.ylabel('Number of Patients')
+      plt.title('Readmission Status by Race')
+      plt.legend(title='Race')
+      plt.tight_layout()
+      st.pyplot(plt)
+      
+      st.subheader("Since all p-values are less than our siginficance value (0.05),"
+                   " Reject H₀ → Significant evidence that age/gender/race affect readmission rates.")
+      st.subheader("Conclusion: Our analysis shows that age group, gender, and race are all significantly associated with hospital "
+                   "readmission rates (p < 0.05 for each, chi-square test). Among these factors, age group exhibits the " 
+                   "strongest association with readmission, as indicated by the highest chi-square statistic. "
+                   "This suggests that patient age is the most influential demographic factor for predicting readmission " 
+                   "risk in this dataset, followed by race and gender. Targeted interventions for higher-risk age groups "
+                   "may be most effective in reducing readmissions.")
+
+
       
              
       
