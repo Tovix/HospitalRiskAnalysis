@@ -6,7 +6,7 @@
 
 ---
 
-## 🎯 **Key Business Impact**
+## **Key Business Impact**
 
 **Current Challenge:** Hospital readmissions cost the healthcare system billions annually and impact patient outcomes, quality ratings, and reimbursement rates.
 
